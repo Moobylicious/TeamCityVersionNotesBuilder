@@ -20,9 +20,20 @@ namespace TCReleaseNoteCompiler
             //arg 3 - output file name
             var outputfile = args[2];
 
+            
+            bool getMergeCommits = false;
+            bool getFileChangeCommits = true;
+            
+            //arg 4 - if we want merge commits, includes "merges"
+            //if we want file commits, includes 'files'
+            //if absent, assume files only.
+            if (args.Length > 3)
+            {
+                getMergeCommits = args[3].ToLower().Contains("merges");
+                getFileChangeCommits = args[3].ToLower().Contains("files");
+            }
 
             var buildsUrl = $"app/rest/builds?locator=buildType(id:{projectId})";
-
 
 
             //http://localhost:32768/app/rest/changes?locator=buildType:(id:CashDesk_Release)
@@ -38,12 +49,8 @@ namespace TCReleaseNoteCompiler
             var request = new RestRequest(buildsUrl);
 
             var result = client.Execute(request);
-            if (result.StatusCode == System.Net.HttpStatusCode.OK)
-            {
-                //Get builds.
-            }
-            else
-            {
+            if (result.StatusCode != System.Net.HttpStatusCode.OK)
+            { 
                 return -1;
             }
 
@@ -115,17 +122,77 @@ namespace TCReleaseNoteCompiler
                                                     var thisChangeDetail = JsonConvert.DeserializeObject<ChangeDetail>(detailResponse.Content, dtConverter);
                                                     if (thisChangeDetail != null)
                                                     {
+                                                        var addComment = false;
                                                         //only get changes which changed a file (merge changes just repeat the same comments)
-                                                        if (thisChangeDetail.files?.file?.Any() ?? false)
+                                                        if (getFileChangeCommits && (thisChangeDetail.files?.file?.Any() ?? false))
                                                         {
-                                                            var fileList = string.Join(";  ", thisChangeDetail.files?.file?.Select(f => f.file));
+                                                            var fileList = string.Join("\r\n    ", thisChangeDetail.files?.file?.Select(f => f.file));
 
-                                                            simpleChanges.AppendLine($"## {thisChangeDetail.id} - {thisChangeDetail.date}");
-                                                            simpleChanges.AppendLine(thisChangeDetail.comment);
-
+                                                            simpleChanges.AppendLine($"### {thisChangeDetail.id} - {thisChangeDetail.date}");
 
                                                             if (!string.IsNullOrEmpty(fileList))
-                                                                simpleChanges.AppendLine($"    [{fileList}]");
+                                                                simpleChanges.AppendLine($"```\r\n    {fileList}\r\n```");
+
+                                                            addComment = true;
+
+                                                        }
+                                                        else if (getMergeCommits 
+                                                            && !(thisChangeDetail.files?.file?.Any() ?? false)
+                                                            && (thisChangeDetail.comment.ToLower().StartsWith("merge")))
+                                                        {
+                                                            var commentLines = thisChangeDetail.comment.Split(new [] { '\n' },StringSplitOptions.RemoveEmptyEntries);
+                                                            
+                                                            if ((commentLines.Count() <= 1) && (thisChangeDetail.comment.ToLower().StartsWith("merge branch")))
+                                                            {
+                                                                //a single line with a comment starting 'merge branch' indicates a branch merge only commit, which we don't
+                                                                //need to bother including in release notes.
+                                                                addComment = false;
+                                                            } else if (
+                                                                (commentLines.Count() > 1) 
+                                                                && (commentLines.Last().Trim().StartsWith("* ")) 
+                                                                && (commentLines.Last().Trim().EndsWith(":"))
+                                                                )
+                                                            {
+                                                                //this appears to be another comment like:
+                                                                //
+                                                                //Merge branch 'release' into develop
+                                                                //* release:
+                                                                //
+                                                                //...which we don't need?
+                                                                addComment = false;
+                                                            }
+                                                            else
+                                                            {
+                                                                addComment = true;
+                                                            }
+
+                                                            if (addComment)
+                                                            {
+                                                                simpleChanges.AppendLine($"## {thisChangeDetail.date}");
+
+                                                                //Change comment to make it more markdown-friendly.
+                                                                thisChangeDetail.comment = 
+                                                                    string.Join("\r\n", commentLines
+                                                                    .Select(l =>
+                                                                     {
+                                                                         var thisLine = l.Trim();
+                                                                         if (!thisLine.StartsWith("*"))
+                                                                         {
+                                                                             thisLine = $"* {thisLine}";
+                                                                         }
+                                                                         return thisLine;
+                                                                     })
+                                                                 );
+                                                            }
+                                                        }
+
+                                                        
+                                                        if (addComment)
+                                                        {
+                                                            //For markdown purposes, need to replace single CRLF with double on or it's all mushed into one paragraph.
+                                                            //Get rid of any \r that may be there (as we don't know whether the comment will use linux-style \n only or not), 
+                                                            //then replace any single LF with double for MD purposes, and include a * at start for MD to bullet list it.
+                                                            simpleChanges.AppendLine(thisChangeDetail.comment);
 
                                                             simpleChanges.AppendLine();
                                                         }
