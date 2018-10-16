@@ -1,9 +1,9 @@
-﻿using Newtonsoft.Json;
-using RestSharp;
-using RestSharp.Authenticators;
-using System;
+﻿using System;
 using System.Linq;
 using System.Text;
+using Newtonsoft.Json;
+using RestSharp;
+using RestSharp.Authenticators;
 using TCReleaseNoteCompiler.Build;
 
 namespace TCReleaseNoteCompiler
@@ -12,13 +12,22 @@ namespace TCReleaseNoteCompiler
     {
         static int Main(string[] args)
         {
+
+
+
             //arg1 = TC base url.
             var tcBase = args[0];
-            //arg2 = project ID
-            var projectId = args[1];
+            //arg 2 - username
+            var user = args[1];
 
-            //arg 3 - output file name
-            var outputfile = args[2];
+            //arg 3 - password
+            var password = args[2];
+
+            //arg4 = project ID
+            var projectId = args[3];
+
+            //arg 5 - output file name
+            var outputfile = args[4];
 
             
             bool getMergeCommits = false;
@@ -27,10 +36,10 @@ namespace TCReleaseNoteCompiler
             //arg 4 - if we want merge commits, includes "merges"
             //if we want file commits, includes 'files'
             //if absent, assume files only.
-            if (args.Length > 3)
+            if (args.Length > 5)
             {
-                getMergeCommits = args[3].ToLower().Contains("merges");
-                getFileChangeCommits = args[3].ToLower().Contains("files");
+                getMergeCommits = args[5].ToLower().Contains("merges");
+                getFileChangeCommits = args[5].ToLower().Contains("files");
             }
 
             var buildsUrl = $"app/rest/builds?locator=buildType(id:{projectId})";
@@ -41,7 +50,7 @@ namespace TCReleaseNoteCompiler
 
             var client = new RestClient(tcBase)
             {
-                Authenticator = new HttpBasicAuthenticator("rest", "rest")
+                Authenticator = new HttpBasicAuthenticator(user, password)
             };
 
 
