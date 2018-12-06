@@ -31,11 +31,11 @@ namespace TCReleaseNoteCompiler
 
             
             bool getMergeCommits = false;
-            bool getFileChangeCommits = true;
-            
+            bool getFileChangeCommits = false;
+            bool getJustComments = true;
             //arg 4 - if we want merge commits, includes "merges"
-            //if we want file commits, includes 'files'
-            //if absent, assume files only.
+            //if we want file commits, includes 'files' and changset nos.
+            //if absent, assume just getting comments for simple list of changes - no changeset/commits, just commit messages.
             if (args.Length > 5)
             {
                 getMergeCommits = args[5].ToLower().Contains("merges");
@@ -193,6 +193,11 @@ namespace TCReleaseNoteCompiler
                                                                      })
                                                                  );
                                                             }
+                                                        }
+                                                        else if (getJustComments)
+                                                        {
+                                                            //If not getting files or merge commits, we just get all the comments and append them...
+                                                            addComment = true;
                                                         }
 
                                                         
