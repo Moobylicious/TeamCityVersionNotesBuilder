@@ -31,15 +31,17 @@ namespace TCReleaseNoteCompiler
 
             
             bool getMergeCommits = false;
-            bool getFileChangeCommits = false;
+            bool getFileChangeCommitDetails = false;
             bool getJustComments = true;
             //arg 4 - if we want merge commits, includes "merges"
             //if we want file commits, includes 'files' and changset nos.
             //if absent, assume just getting comments for simple list of changes - no changeset/commits, just commit messages.
             if (args.Length > 5)
             {
+                getJustComments = false;
+                //get only 'merge' commits.  Usually good for releases, but relies on the 'merge' commit 
                 getMergeCommits = args[5].ToLower().Contains("merges");
-                getFileChangeCommits = args[5].ToLower().Contains("files");
+                getFileChangeCommitDetails = args[5].ToLower().Contains("full");
             }
 
             var buildsUrl = $"app/rest/builds?locator=buildType(id:{projectId})";
@@ -133,14 +135,17 @@ namespace TCReleaseNoteCompiler
                                                     {
                                                         var addComment = false;
                                                         //only get changes which changed a file (merge changes just repeat the same comments)
-                                                        if (getFileChangeCommits && (thisChangeDetail.files?.file?.Any() ?? false))
+                                                        if (getFileChangeCommitDetails && (thisChangeDetail.files?.file?.Any() ?? false))
                                                         {
                                                             var fileList = string.Join("\r\n    ", thisChangeDetail.files?.file?.Select(f => f.file));
 
-                                                            simpleChanges.AppendLine($"### {thisChangeDetail.id} - {thisChangeDetail.date}");
+                                                            if (getFileChangeCommitDetails)
+                                                            {
+                                                                simpleChanges.AppendLine($"### {thisChangeDetail.id} - {thisChangeDetail.date}");
 
-                                                            if (!string.IsNullOrEmpty(fileList))
-                                                                simpleChanges.AppendLine($"```\r\n    {fileList}\r\n```");
+                                                                if (!string.IsNullOrEmpty(fileList))
+                                                                    simpleChanges.AppendLine($"```\r\n    {fileList}\r\n```");
+                                                            }
 
                                                             addComment = true;
 
@@ -149,7 +154,7 @@ namespace TCReleaseNoteCompiler
                                                             && !(thisChangeDetail.files?.file?.Any() ?? false)
                                                             && (thisChangeDetail.comment.ToLower().StartsWith("merge")))
                                                         {
-                                                            var commentLines = thisChangeDetail.comment.Split(new [] { '\n' },StringSplitOptions.RemoveEmptyEntries);
+                                                            var commentLines = thisChangeDetail.comment.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList();
                                                             
                                                             if ((commentLines.Count() <= 1) && (thisChangeDetail.comment.ToLower().StartsWith("merge branch")))
                                                             {
@@ -172,6 +177,17 @@ namespace TCReleaseNoteCompiler
                                                             }
                                                             else
                                                             {
+                                                                //remove unnecessary lines re. merges.
+                                                                if (commentLines.First().ToLower().StartsWith("merge branch"))
+                                                                {
+                                                                    commentLines = commentLines.Skip(1).ToList();
+                                                                }
+                                                                //if only one word on first line and ends with colon, remove that (branch label)
+                                                                if (commentLines.First().StartsWith("* ") && commentLines.First().EndsWith(":"))
+                                                                {
+                                                                    commentLines = commentLines.Skip(1).ToList();
+                                                                }
+
                                                                 addComment = true;
                                                             }
 
