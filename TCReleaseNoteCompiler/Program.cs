@@ -1,9 +1,9 @@
-﻿using System;
-using System.Linq;
-using System.Text;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using RestSharp;
 using RestSharp.Authenticators;
+using System;
+using System.Linq;
+using System.Text;
 using TCReleaseNoteCompiler.Build;
 
 namespace TCReleaseNoteCompiler
@@ -85,11 +85,10 @@ namespace TCReleaseNoteCompiler
 
                     if ((builds?.count ?? 0) > 0)
                     {
-                        foreach (var bld in builds.build.Where(b => b.status == "SUCCESS").OrderByDescending(b => b.id))
+                        foreach (var bld in builds.build/*.Where(b => b.status == "SUCCESS")*/.OrderByDescending(b => b.id))
                         {
                             try
                             {
-                                simpleChanges.AppendLine($"# Build {bld.number} (id:{bld.id})");
 
                                 request = new RestRequest(bld.href);
 
@@ -115,7 +114,7 @@ namespace TCReleaseNoteCompiler
                                     return -1;
                                 }
                                 var changes = JsonConvert.DeserializeObject<Changes>(result.Content, dtConverter);
-
+                                var thisChangeList = new StringBuilder();
                                 if (changes?.change?.Any() ?? false)
                                 {
 
@@ -141,10 +140,10 @@ namespace TCReleaseNoteCompiler
 
                                                             if (getFileChangeCommitDetails)
                                                             {
-                                                                simpleChanges.AppendLine($"### {thisChangeDetail.id} - {thisChangeDetail.date}");
+                                                                thisChangeList.AppendLine($"### {thisChangeDetail.id} - {thisChangeDetail.date}");
 
                                                                 if (!string.IsNullOrEmpty(fileList))
-                                                                    simpleChanges.AppendLine($"```\r\n    {fileList}\r\n```");
+                                                                    thisChangeList.AppendLine($"```\r\n    {fileList}\r\n```");
                                                             }
 
                                                             addComment = true;
@@ -193,7 +192,7 @@ namespace TCReleaseNoteCompiler
 
                                                             if (addComment)
                                                             {
-                                                                simpleChanges.AppendLine($"## {thisChangeDetail.date}");
+                                                                thisChangeList.AppendLine($"## {thisChangeDetail.date}");
 
                                                                 //Change comment to make it more markdown-friendly.
                                                                 thisChangeDetail.comment = 
@@ -222,9 +221,9 @@ namespace TCReleaseNoteCompiler
                                                             //For markdown purposes, need to replace single CRLF with double on or it's all mushed into one paragraph.
                                                             //Get rid of any \r that may be there (as we don't know whether the comment will use linux-style \n only or not), 
                                                             //then replace any single LF with double for MD purposes, and include a * at start for MD to bullet list it.
-                                                            simpleChanges.AppendLine(thisChangeDetail.comment);
+                                                            thisChangeList.AppendLine(thisChangeDetail.comment);
 
-                                                            simpleChanges.AppendLine();
+                                                            thisChangeList.AppendLine();
                                                         }
                                                     }
 
@@ -233,16 +232,23 @@ namespace TCReleaseNoteCompiler
                                         }
                                         catch (Exception ex)
                                         {
-                                            simpleChanges.AppendLine("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                                            simpleChanges.AppendLine($"Error attempting to compile details for change Id {c.id} via {c.href}");
-                                            simpleChanges.AppendLine(ex.Message);
-                                            simpleChanges.AppendLine("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                                            thisChangeList.AppendLine("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                                            thisChangeList.AppendLine($"Error attempting to compile details for change Id {c.id} via {c.href}");
+                                            thisChangeList.AppendLine(ex.Message);
+                                            thisChangeList.AppendLine("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
                                             Console.WriteLine($"Failed to deserialize response for change Id {c.id} via {c.href}");
                                             Console.WriteLine(ex.Message);
                                         }
                                     }
+                                    if (thisChangeList.Length > 0)
+                                    {
+                                        //only append build info if there are some changes...
+                                        simpleChanges.AppendLine($"# Build {bld.number} (id:{bld.id})");
+                                        simpleChanges.AppendLine(thisChangeList.ToString());
+                                        simpleChanges.AppendLine("--------------");
+                                    }
+
                                 }
-                                simpleChanges.AppendLine("--------------");
                             }
                             catch (Exception ex)
                             {
