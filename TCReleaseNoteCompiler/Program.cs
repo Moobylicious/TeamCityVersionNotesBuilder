@@ -2,6 +2,7 @@
 using RestSharp;
 using RestSharp.Authenticators;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using TCReleaseNoteCompiler.Build;
@@ -177,7 +178,7 @@ namespace TCReleaseNoteCompiler
                                                             else
                                                             {
                                                                 //remove unnecessary lines re. merges.
-                                                                if (commentLines.First().ToLower().StartsWith("merge branch"))
+                                                                if (commentLines.First().ToLower().StartsWith("merge "))
                                                                 {
                                                                     commentLines = commentLines.Skip(1).ToList();
                                                                 }
@@ -209,7 +210,7 @@ namespace TCReleaseNoteCompiler
                                                                  );
                                                             }
                                                         }
-                                                        else if (getJustComments)
+                                                        else if (getJustComments && !thisChangeDetail.comment.ToLower().StartsWith("merge "))
                                                         {
                                                             //If not getting files or merge commits, we just get all the comments and append them...
                                                             addComment = true;
@@ -218,12 +219,41 @@ namespace TCReleaseNoteCompiler
                                                         
                                                         if (addComment)
                                                         {
-                                                            //For markdown purposes, need to replace single CRLF with double on or it's all mushed into one paragraph.
-                                                            //Get rid of any \r that may be there (as we don't know whether the comment will use linux-style \n only or not), 
-                                                            //then replace any single LF with double for MD purposes, and include a * at start for MD to bullet list it.
+                                                            var commentLines = thisChangeDetail.comment.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+
+                                                            var finalCommentLines = new List<string>();
+                                                            //Any comment lines which start with [! and end with ]?
+                                                            //highlight those specially!
+                                                            foreach (var cl in commentLines)
+                                                            {
+                                                                var line = cl;
+                                                                if (cl.Trim().StartsWith("[!") && cl.Trim().EndsWith("!]"))
+                                                                {
+                                                                    line = line.Trim().Substring(2, cl.Length - 4);
+                                                                    //append that text inside 'i' tags which will get rendered
+                                                                    //when spewed via Docs site as warning...
+                                                                    line = $"<i class='special warning-triangle'>{line}</i>";
+                                                                }
+                                                                finalCommentLines.Add(line);
+                                                            }
+                                                            
+                                                            //Change comment to make it more markdown-friendly.
+                                                            thisChangeDetail.comment =
+                                                                string.Join("\r\n", finalCommentLines
+                                                                .Select(l =>
+                                                                {
+                                                                    var thisLine = l.Trim();
+                                                                    if (!thisLine.StartsWith("*"))
+                                                                    {
+                                                                        thisLine = $"* {thisLine}";
+                                                                    }
+                                                                    return thisLine;
+                                                                })
+                                                             );
+
                                                             thisChangeList.AppendLine(thisChangeDetail.comment);
 
-                                                            thisChangeList.AppendLine();
+                                                            //thisChangeList.AppendLine();
                                                         }
                                                     }
 
