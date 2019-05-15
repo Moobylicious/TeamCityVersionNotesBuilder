@@ -234,7 +234,12 @@ namespace TCReleaseNoteCompiler
                                                                     //when spewed via Docs site as warning...
                                                                     line = $"<i class='special warning-triangle'>{line}</i>";
                                                                 }
-                                                                finalCommentLines.Add(line);
+
+                                                                //don't add lines which start with WIP:
+                                                                if (!line.Trim().ToLower().StartsWith("wip:"))
+                                                                {
+                                                                    finalCommentLines.Add(line);
+                                                                }
                                                             }
                                                             
                                                             //Change comment to make it more markdown-friendly.
@@ -251,9 +256,10 @@ namespace TCReleaseNoteCompiler
                                                                 })
                                                              );
 
-                                                            thisChangeList.AppendLine(thisChangeDetail.comment);
-
-                                                            //thisChangeList.AppendLine();
+                                                            if (!string.IsNullOrEmpty(thisChangeDetail.comment))
+                                                            {
+                                                                thisChangeList.AppendLine(thisChangeDetail.comment);
+                                                            }
                                                         }
                                                     }
 
