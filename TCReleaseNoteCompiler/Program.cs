@@ -11,11 +11,10 @@ namespace TCReleaseNoteCompiler
 {
     class Program
     {
+        static string[] IgnoredCommitPrefixes = new[] { "wip:", "@wip" };
+
         static int Main(string[] args)
         {
-
-
-
             //arg1 = TC base url.
             var tcBase = args[0];
             //arg 2 - username
@@ -235,8 +234,9 @@ namespace TCReleaseNoteCompiler
                                                                     line = $"<i class='special warning-triangle'>{line}</i>";
                                                                 }
 
-                                                                //don't add lines which start with WIP:
-                                                                if (!line.Trim().ToLower().StartsWith("wip:"))
+                                                                //don't add lines which start with WIP: or @wip
+                                                                if (!IgnoredCommitPrefixes.Any(x=>line.Trim().ToLower().StartsWith(x)))
+                                                                //if (!line.Trim().ToLower().StartsWith("wip:"))
                                                                 {
                                                                     finalCommentLines.Add(line);
                                                                 }
