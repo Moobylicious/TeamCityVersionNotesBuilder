@@ -234,8 +234,8 @@ namespace TCReleaseNoteCompiler
                                                                     line = $"<i class='special warning-triangle'>{line}</i>";
                                                                 }
 
-                                                                //don't add lines which start with WIP: or @wip
-                                                                if (!IgnoredCommitPrefixes.Any(x=>line.Trim().ToLower().StartsWith(x)))
+                                                                //don't add lines which start with WIP: or @wip, unless building FULL notes...
+                                                                if (getFileChangeCommitDetails || (!IgnoredCommitPrefixes.Any(x=>line.Trim().ToLower().StartsWith(x))))
                                                                 //if (!line.Trim().ToLower().StartsWith("wip:"))
                                                                 {
                                                                     finalCommentLines.Add(line);
