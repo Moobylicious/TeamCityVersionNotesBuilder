@@ -225,15 +225,23 @@ namespace TCReleaseNoteCompiler
                                                             //highlight those specially!
                                                             foreach (var cl in commentLines)
                                                             {
-                                                                var line = cl;
-                                                                if (cl.Trim().StartsWith("[!") && cl.Trim().EndsWith("!]"))
+                                                                var line = cl.Trim();
+                                                                //check for replacement bits with <i> tags for rendering to website.
+                                                                //only do this if NOT doing 'full' mode
+                                                                if (!getFileChangeCommitDetails)
                                                                 {
-                                                                    line = line.Trim().Substring(2, cl.Length - 4);
-                                                                    //append that text inside 'i' tags which will get rendered
-                                                                    //when spewed via Docs site as warning...
-                                                                    line = $"<i class='special warning-triangle'>{line}</i>";
-                                                                }
+                                                                    var warningStart = line.IndexOf("[!");
+                                                                    var warningEnd = line.IndexOf("!]", warningStart >= 0 ? warningStart : 0);
+                                                                    if (warningStart >= 0 || warningEnd > warningStart)
+                                                                    {
+                                                                        var firstPart = line.Substring(0, warningStart);
+                                                                        var warningContents = line.Substring(warningStart + 2, warningEnd - (warningStart + 2));
+                                                                        var lastPart = line.Substring(warningEnd + 2, line.Length - (warningEnd + 2));
 
+                                                                        //render to <i> tags....
+                                                                        line = $"{firstPart}<i class='special warning-triangle'>{warningContents}</i>{lastPart}";
+                                                                    }
+                                                                }
                                                                 //don't add lines which start with WIP: or @wip, unless building FULL notes...
                                                                 if (getFileChangeCommitDetails || (!IgnoredCommitPrefixes.Any(x=>line.Trim().ToLower().StartsWith(x))))
                                                                 //if (!line.Trim().ToLower().StartsWith("wip:"))
