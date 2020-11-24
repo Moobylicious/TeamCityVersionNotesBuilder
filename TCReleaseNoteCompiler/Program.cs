@@ -286,8 +286,24 @@ namespace TCReleaseNoteCompiler
                                     }
                                     if (thisChangeList.Length > 0)
                                     {
+                                        //format from the API call is a bit odd, and has no separator info.
+                                        //so take first 4, next 2, next 2, etc...
+                                        string hackedDate = "n/a";
+                                        try
+                                        {
+                                            hackedDate =
+                                                $"{buildinfo.finishDate.Substring(0, 4)}/{buildinfo.finishDate.Substring(4, 2)}/{buildinfo.finishDate.Substring(6, 2)} " +
+                                                $"{buildinfo.finishDate.Substring(9, 2)}:{buildinfo.finishDate.Substring(11, 2)}:{buildinfo.finishDate.Substring(13, 2)})";
+
+                                        }
+                                        catch
+                                        {
+
+                                        }
+
+                                        //DateTime.TryParse(buildinfo.finishDate, out buildDate);
                                         //only append build info if there are some changes...
-                                        simpleChanges.AppendLine($"# Build {bld.number} (id:{bld.id}) Build Date:{bld.finishDate}");
+                                        simpleChanges.AppendLine($"# Build {bld.number} (id:{bld.id}) Build Date:{hackedDate}");
                                         simpleChanges.AppendLine(thisChangeList.ToString());
                                         simpleChanges.AppendLine("--------------");
                                     }
