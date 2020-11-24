@@ -287,7 +287,7 @@ namespace TCReleaseNoteCompiler
                                     if (thisChangeList.Length > 0)
                                     {
                                         //only append build info if there are some changes...
-                                        simpleChanges.AppendLine($"# Build {bld.number} (id:{bld.id})");
+                                        simpleChanges.AppendLine($"# Build {bld.number} (id:{bld.id}) Build Date:{bld.finishDate}");
                                         simpleChanges.AppendLine(thisChangeList.ToString());
                                         simpleChanges.AppendLine("--------------");
                                     }
