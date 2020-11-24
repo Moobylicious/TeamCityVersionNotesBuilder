@@ -293,7 +293,7 @@ namespace TCReleaseNoteCompiler
                                         {
                                             hackedDate =
                                                 $"{buildinfo.finishDate.Substring(0, 4)}/{buildinfo.finishDate.Substring(4, 2)}/{buildinfo.finishDate.Substring(6, 2)} " +
-                                                $"{buildinfo.finishDate.Substring(9, 2)}:{buildinfo.finishDate.Substring(11, 2)}:{buildinfo.finishDate.Substring(13, 2)})";
+                                                $"{buildinfo.finishDate.Substring(9, 2)}:{buildinfo.finishDate.Substring(11, 2)}:{buildinfo.finishDate.Substring(13, 2)}";
 
                                         }
                                         catch
