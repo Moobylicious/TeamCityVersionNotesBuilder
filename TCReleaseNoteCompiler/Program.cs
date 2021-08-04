@@ -307,7 +307,27 @@ namespace TCReleaseNoteCompiler
                                         simpleChanges.AppendLine(thisChangeList.ToString());
                                         simpleChanges.AppendLine("--------------");
                                     }
+                                }
+                                else
+                                {
+                                    string hackedDate = "n/a";
+                                    try
+                                    {
+                                        hackedDate =
+                                            $"{buildinfo.finishDate.Substring(0, 4)}/{buildinfo.finishDate.Substring(4, 2)}/{buildinfo.finishDate.Substring(6, 2)} " +
+                                            $"{buildinfo.finishDate.Substring(9, 2)}:{buildinfo.finishDate.Substring(11, 2)}:{buildinfo.finishDate.Substring(13, 2)}";
 
+                                    }
+                                    catch
+                                    {
+
+                                    }
+
+                                    //DateTime.TryParse(buildinfo.finishDate, out buildDate);
+                                    //only append build info if there are some changes...
+                                    simpleChanges.AppendLine($"# Build {bld.number} (id:{bld.id}) Build Date:{hackedDate}");
+                                    simpleChanges.AppendLine("No Changes");
+                                    simpleChanges.AppendLine("--------------");
                                 }
                             }
                             catch (Exception ex)
