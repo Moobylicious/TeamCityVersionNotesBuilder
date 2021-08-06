@@ -140,7 +140,7 @@ namespace TCReleaseNoteCompiler
 
                                                             if (getFileChangeCommitDetails)
                                                             {
-                                                                thisChangeList.AppendLine($"### {thisChangeDetail.id} - {thisChangeDetail.date}");
+                                                                thisChangeList.AppendLine($"#### {thisChangeDetail.id} - {thisChangeDetail.date}");
 
                                                                 if (!string.IsNullOrEmpty(fileList))
                                                                     thisChangeList.AppendLine($"```\r\n    {fileList}\r\n```");
@@ -192,7 +192,7 @@ namespace TCReleaseNoteCompiler
 
                                                             if (addComment)
                                                             {
-                                                                thisChangeList.AppendLine($"## {thisChangeDetail.date}");
+                                                                thisChangeList.AppendLine($"### {thisChangeDetail.date}");
 
                                                                 //Change comment to make it more markdown-friendly.
                                                                 thisChangeDetail.comment = 
@@ -303,7 +303,7 @@ namespace TCReleaseNoteCompiler
 
                                         //DateTime.TryParse(buildinfo.finishDate, out buildDate);
                                         //only append build info if there are some changes...
-                                        simpleChanges.AppendLine($"# Build {bld.number} (id:{bld.id}) Build Date:{hackedDate}");
+                                        simpleChanges.AppendLine($"## Build {bld.number} (id:{bld.id}) Build Date:{hackedDate}");
                                         simpleChanges.AppendLine(thisChangeList.ToString());
                                         simpleChanges.AppendLine("--------------");
                                     }
@@ -325,7 +325,7 @@ namespace TCReleaseNoteCompiler
 
                                     //DateTime.TryParse(buildinfo.finishDate, out buildDate);
                                     //only append build info if there are some changes...
-                                    simpleChanges.AppendLine($"# Build {bld.number} (id:{bld.id}) Build Date:{hackedDate}");
+                                    simpleChanges.AppendLine($"## Build {bld.number} (id:{bld.id}) Build Date:{hackedDate}");
                                     simpleChanges.AppendLine("No Changes");
                                     simpleChanges.AppendLine("--------------");
                                 }
